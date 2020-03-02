@@ -1,41 +1,9 @@
-const app = require('express')()
-const http = require('http').createServer(app)
-const io = require('socket.io')(http)
+
 const io = require('console-read-write');
-
-
-// array=[wolf,seer,villager,witch,hunter,bodyguard]
 
 const Server = function () {
   this.data = {}
 }
-
-var game = require('./')
-
-app.get('/', (req, res) => {
-  res.send('<h1>Hey Socket.io</h1>')
-})
-
-let arr = shuffle(roleArray)
-
-// io.on('connection', socket => {
-//   console.log('-------' + socket.id + '--------')
-//   socket.emit('my broadcast',() {
-//     message: 'Welcome to WereWolf-itss.'
-//   })
-//   socket.broadcast.emit('my broadcast', {
-//     message: 'A new client has connected.'
-//   })
-
-//   socket.on('send', function (data) {
-//     console.log(data)
-//     io.emit('my broadcast', data)
-//   })
-// })
-
-// http.listen(3000, () => {
-//   console.log('listening on *:3000')
-// })
 
 Server.prototype.createLobby = function () {
   let id = Math.random().toSring().subtr(2, 5).toUpperCase();
@@ -121,10 +89,12 @@ function createVoteTable(role, room) {
   return room.users.filter((usr) => usr.role == role);
 }
 
+
+// PLAY
 async function next(room) {
   //switch the day
   room.isDay != room.isDay;
-  room.numOfDay += 1;
+  room.numOfDay+=1;
 
   let deads = room.users.filter(usr => usr.isDead);
   let alive = room.users.filter(usr => !usr.isDead);
@@ -145,53 +115,53 @@ async function next(room) {
 
     console.log("Day " + (room.numOfDay - 1) + "has" + deads.length + "dead");
     console.log(deads);
-    let voteTable = {};
-    let maxOfVote = 0;
+    let voteTable={};
+    let maxOfVote=0;
 
-    createVoteTable(voteTable, alive);
-    for (let i = 0; i < alive.length; i++) {
-      let chosen = await io.ask(alive[i].uid + "wanna choose?" + (usr => usr.uid));
-      if (chosen != '') {
+    createVoteTable(voteTable,alive);
+    for (let i=0;i<alive.length;i++){
+      let chosen= await io.ask(alive[i].uid+ "wanna choose?"+(usr=>usr.uid)); 
+      if (chosen!=''){
         voteTable[chosen]++;
-        if (voteTable[chosen] > maxOfVote) {
-          maxOfVote = voteTable[chosen];
+        if (voteTable[chosen]>maxOfVote){
+          maxOfVote=voteTable[chosen];
         }
-      }
+      } 
     }
-
-
+    
+        
     if (maxOfVote == 0) {
       io.ask("End of the day #" + (room.numOfDay - 1));
       await next(room);
       return;
-    }
-
-    let hangedUser = null;
-    for (let i = 0; i < alives.length; i++) {
+  }
+  
+  let hangedUser = null;
+  for (let i = 0; i < alives.length; i++) {
       if (voteTable[alives[i].uid] == maxOfVote) {
-        hangedUser = alives[i];
+          hangedUser = alives[i];
       }
-    }
-    // Revote
-    wantToKill = 0;
-    for (let i = 0; i < alives.length; i++) {
+  }
+  // Revote
+  wantToKill = 0;
+  for (let i = 0; i < alives.length; i++) {
       if (alives[i].uid != hangedUser.uid) {
-        let vote = await io.ask(alives[i].uid + " want to kill " + hangedUser.uid + "? 0 - NO | 1 - YES");
-        if (vote == 1) {
-          wantToKill++;
-        } else {
-          wantToKill--;
-        }
+          let vote = await io.ask(alives[i].uid + " want to kill " + hangedUser.uid + "? 0 - NO | 1 - YES");
+          if (vote == 1) {
+              wantToKill++;
+          } else {
+              wantToKill--;
+          }
       }
-    }
-    if (wantToKill > 0) {
+  }
+  if (wantToKill > 0) {
       hangedUser.isDead = true;
       io.write(hangedUser.uid + " is killed");
-    } else {
+  } else {
       io.write(hangedUser.uid + " is not killed");
-    }
-    await next(room);
-    return;
+  }
+  await next(room);
+  return;
 
   } else { //Night
     io.write("#Night" + room.numOfDay)
@@ -251,18 +221,6 @@ async function next(room) {
     }
     //End of witch
 
-
-    //   if (room.users.meta.useKillBottle) {
-    //     killByWitch = await io.ask(witch.uid + "Witch want to kill?" + notWitch.map(usr => usr.uid));
-    //     killByWitch = killByWitch == '' ? null : killByWitch;     //needfix logic
-    //   }
-    //   if (room.users.meta.useSaveBottle) {
-    //     saveByWitch = await io.ask(witch.uid + "Witch want to save?" + notWitch.map(usr => usr.uid));
-    //     saveByWitch = saveByWitch == '' ? null : saveByWitch;    //need fix logic
-    //   }
-    // }
-    //End Of Witch (draft)
-
     //Seer
     let seer = room.users.filter(usr => usr.role == "seer")[0];
     let seerChosen = null;
@@ -306,6 +264,8 @@ async function next(room) {
 
   }
 }
+//END OF PLAY
+
 
 module.exports = {
   creatNewServer: Server
