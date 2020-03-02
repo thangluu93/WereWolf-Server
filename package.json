@@ -1,0 +1,11 @@
+{
+    "name": "socketio-node",
+    "version": "0.0.1",
+    "description": "my first socket.io app",
+    "dependencies": {
+        "console-read-write": "^0.1.1",
+        "express": "^4.17.1",
+        "socket.io": "^2.3.0",
+        "werewolf-brain": "^2.2.2"
+    }
+}
