@@ -112,7 +112,7 @@ async function next(room) {
         io.write("Game Over! the villager win !!!");
         return;
     }   alives.length - (deads.length - deadWolf.length)) <= room.numOfWolf) {
-        io.write("Game
+        io.write("Game over");
     if ((alives.length - (deads.length - deadWolf.length)) <= room.numOfWolf) {
         io.write("Game Over! the wolf win !!!");
         return;

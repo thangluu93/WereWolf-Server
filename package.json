@@ -4,6 +4,7 @@
     "description": "my first socket.io app",
     "dependencies": {
         "console-read-write": "^0.1.1",
+        "cors": "^2.8.5",
         "express": "^4.17.1",
         "socket.io": "^2.3.0",
         "werewolf-brain": "^2.2.2"

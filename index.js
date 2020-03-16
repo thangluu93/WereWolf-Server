@@ -1,12 +1,14 @@
-
-const io = require('console-read-write');
+const app = require('express')();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+// const io = require('console-read-write');
 
 const Server = function () {
-  this.data = {}
+  this.data = {} 
 }
 
 Server.prototype.createLobby = function () {
-  let id = Math.random().toSring().subtr(2, 5).toUpperCase();
+  let id = Math.random().toString().substring(2, 8).toUpperCase();
   this.data[id] = {
     users: [],
     isDay: false,
@@ -15,22 +17,26 @@ Server.prototype.createLobby = function () {
   return id;
 }
 
+Server.prototype.getAllLobbyId = function(){
+  return Object.keys(this.data);
+}
+
 Server.prototype.findLobby = function (id) {
   return this.data[id]
 }
 
 Server.prototype.joinLobby = function (id, userId) {
   let room = this.findLobby(id);
-  if (room != undefined) {
-    room.users.push([{
+  if (room !=null) {
+    room.users.push({
       uid: userId,
       role: "",
       isDead: false
-    }
-    ]);
-    return true;
+    });
+    console.log("user array after push"+  room);
+    return true;  //join success
   }
-  return false
+  return false //Join fail
 }
 
 
@@ -69,7 +75,18 @@ Server.prototype.setRole = function (room) {
   }
 }
 
-Server.prototype.play = function (id) {
+Server.prototype.checkRoomStatus = function(id){
+  let room = this.findLobby(id);
+  if (room == undefined) {
+    return false;
+  }
+  if (room.users.length < 6) {
+    return false;   // not enough users
+  }
+  return true;
+}
+
+Server.prototype.play = async function (id) {
   let room = this.findLobby(id);
   if (room == undefined) {
     return false;
@@ -94,7 +111,7 @@ function createVoteTable(role, room) {
 async function next(room) {
   //switch the day
   room.isDay != room.isDay;
-  room.numOfDay+=1;
+  room.numOfDay += 1;
 
   let deads = room.users.filter(usr => usr.isDead);
   let alive = room.users.filter(usr => !usr.isDead);
@@ -115,53 +132,53 @@ async function next(room) {
 
     console.log("Day " + (room.numOfDay - 1) + "has" + deads.length + "dead");
     console.log(deads);
-    let voteTable={};
-    let maxOfVote=0;
+    let voteTable = {};
+    let maxOfVote = 0;
 
-    createVoteTable(voteTable,alive);
-    for (let i=0;i<alive.length;i++){
-      let chosen= await io.ask(alive[i].uid+ "wanna choose?"+(usr=>usr.uid)); 
-      if (chosen!=''){
+    createVoteTable(voteTable, alive);
+    for (let i = 0; i < alive.length; i++) {
+      let chosen = await io.ask(alive[i].uid + "wanna choose?" + (usr => usr.uid));
+      if (chosen != '') {
         voteTable[chosen]++;
-        if (voteTable[chosen]>maxOfVote){
-          maxOfVote=voteTable[chosen];
+        if (voteTable[chosen] > maxOfVote) {
+          maxOfVote = voteTable[chosen];
         }
-      } 
+      }
     }
-    
-        
+
+
     if (maxOfVote == 0) {
       io.ask("End of the day #" + (room.numOfDay - 1));
       await next(room);
       return;
-  }
-  
-  let hangedUser = null;
-  for (let i = 0; i < alives.length; i++) {
+    }
+
+    let hangedUser = null;
+    for (let i = 0; i < alives.length; i++) {
       if (voteTable[alives[i].uid] == maxOfVote) {
-          hangedUser = alives[i];
+        hangedUser = alives[i];
       }
-  }
-  // Revote
-  wantToKill = 0;
-  for (let i = 0; i < alives.length; i++) {
+    }
+    // Revote
+    wantToKill = 0;
+    for (let i = 0; i < alives.length; i++) {
       if (alives[i].uid != hangedUser.uid) {
-          let vote = await io.ask(alives[i].uid + " want to kill " + hangedUser.uid + "? 0 - NO | 1 - YES");
-          if (vote == 1) {
-              wantToKill++;
-          } else {
-              wantToKill--;
-          }
+        let vote = await io.ask(alives[i].uid + " want to kill " + hangedUser.uid + "? 0 - NO | 1 - YES");
+        if (vote == 1) {
+          wantToKill++;
+        } else {
+          wantToKill--;
+        }
       }
-  }
-  if (wantToKill > 0) {
+    }
+    if (wantToKill > 0) {
       hangedUser.isDead = true;
       io.write(hangedUser.uid + " is killed");
-  } else {
+    } else {
       io.write(hangedUser.uid + " is not killed");
-  }
-  await next(room);
-  return;
+    }
+    await next(room);
+    return;
 
   } else { //Night
     io.write("#Night" + room.numOfDay)
